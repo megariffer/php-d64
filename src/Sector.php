@@ -44,9 +44,9 @@ class Sector
     /**
      * @var $offset int
      *
-     * @return int
+     * @return string
      */
-    public function getByteValue(int $offset = 0x00): int
+    public function getByteValue(int $offset = 0x00): string
     {
         return dechex(ord(substr($this->rawData, $offset)));
     }
