@@ -1,0 +1,26 @@
+{
+    "name": "megariffer/php-d64",
+    "description": "PHP package to handle Commodore 1541 D64 files",
+    "keywords": [
+        "php-d64",
+        "commodore",
+        "c64",
+        "1541"
+    ],
+    "homepage": "https://github.com/php-loep/:package_name",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "olaf",
+            "role": "developer"
+        }
+    ],
+    "require": {
+        "php" : ">=7.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "PhpD64\\": "src"
+        }
+    }
+}
