@@ -2,6 +2,11 @@
 
 namespace PhpD64;
 
+/**
+ * Class Disk
+ *
+ * @package PhpD64
+ */
 class Disk
 {
 
@@ -26,11 +31,34 @@ class Disk
          C0-D3: SPEED DOS track 36-40 BAM entries (only for 40 track)
     */
 
+    /**
+     * The number of the sector containing the BAM (Block Availability Map)
+     */
     protected const BAM_SECTOR = 0;
+
+    /**
+     * The number of the directory track
+     */
     protected const DIRECTORY_TRACK = 18;
+
+    /**
+     * Location of the first directory sector
+     */
     protected const FIRST_DIRECTORY_SECTOR = 1;
+
+    /**
+     * How many sectors are in the directory track
+     */
     protected const DIRECTORY_SECTOR_COUNT = 18;
+
+    /**
+     * Where to put the first data entry
+     */
     protected const FIRST_DATA_TRACK = 17;
+
+    /**
+     * Sector interleave
+     */
     protected const SECTOR_INTERLEAVE = 10;
 
     /**
@@ -47,10 +75,19 @@ class Disk
      */
     protected $tracks;
 
+    /**
+     * @var    File[]
+     */
     protected $directory;
 
+    /**
+     * @var    string
+     */
     protected $name;
 
+    /**
+     * @var    string
+     */
     protected $id;
 
     /*
@@ -59,8 +96,14 @@ class Disk
      *             0xa4: one unused byte
      *      0xa5 - 0xa6: DOS type
      */
+    /**
+     * @var    string
+     */
     protected $header;
 
+    /**
+     * @param string $filename
+     */
     public function loadFromFile(string $filename): void
     {
         $this->filename = $filename;
@@ -68,6 +111,9 @@ class Disk
         $this->getDirectory();
     }
 
+    /**
+     * @param string $filename
+     */
     public function create_empty(string $filename): void
     {
         $this->tracks = $this->createTrackStructure();
@@ -162,6 +208,9 @@ class Disk
         return $this->directory;
     }
 
+    /**
+     * @return string
+     */
     public function getHeader(): string
     {
         if (isset($this->header)) {
@@ -173,6 +222,9 @@ class Disk
         }
     }
 
+    /**
+     * @return int
+     */
     public function getFreeBlocks(): int
     {
         $sector = $this->tracks[self::DIRECTORY_TRACK]->getSector(self::BAM_SECTOR);
@@ -187,6 +239,9 @@ class Disk
         return $free_blocks;
     }
 
+    /**
+     * @return string
+     */
     public function getName(): string
     {
         if (isset($this->name)) {
@@ -198,6 +253,9 @@ class Disk
         }
     }
 
+    /**
+     * @return string
+     */
     public function getId(): string
     {
         if (isset($this->id)) {
@@ -225,6 +283,9 @@ class Disk
         return $this->tracks;
     }
 
+    /**
+     *
+     */
     public function getFirstFreeSector() {
         $sector = $this->tracks[self::DIRECTORY_TRACK]->getSector(self::BAM_SECTOR);
         $offset = 0;

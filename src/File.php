@@ -2,9 +2,17 @@
 
 namespace PhpD64;
 
+/**
+ * Class File
+ *
+ * @package PhpD64
+ */
 class File
 {
 
+    /**
+     * @var string[]
+     */
     private static $fileTypes = [
       '0000' => 'DEL',
       '0001' => 'SEQ',
@@ -41,7 +49,7 @@ class File
     /**
      * @return string
      */
-    public function getRawData()
+    public function getRawData(): string
     {
         return $this->rawData;
     }
@@ -50,60 +58,91 @@ class File
      * @param $data
      * @return $this
      */
-    public function setRawData($data)
+    public function setRawData($data): File
     {
         $this->rawData = $data;
 
         return $this;
     }
 
-    public function setName($name)
+    /**
+     * @param $name
+     */
+    public function setName($name): void
     {
         $this->name = $name;
     }
 
-    public function setSize($size)
+    /**
+     * @param $size
+     */
+    public function setSize($size): void
     {
         $this->size = $size;
     }
 
-    public function setFileType($fileType)
+    /**
+     * @param $fileType
+     */
+    public function setFileType($fileType): void
     {
         $this->fileType = self::$fileTypes[$fileType];
     }
 
-    public function setSectors($first_sector, $tracks)
+    /**
+     * @return string[]
+     */
+    public static function getFileTypes(): array
+    {
+        return self::$fileTypes;
+    }
+
+    /**
+     * @param string[] $fileTypes
+     */
+    public static function setFileTypes(array $fileTypes): void
+    {
+        self::$fileTypes = $fileTypes;
+    }
+
+    /**
+     * @param $first_sector
+     * @param $tracks
+     */
+    public function setSectors($first_sector, $tracks): void
     {
         $this->sectors[] = $first_sector;
     }
 
-    public function getName()
+    /**
+     * @return array
+     */
+    public function getSectors(): array
+    {
+        return $this->sectors;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName(): string
     {
         return $this->name;
     }
 
-    public function getFileType()
+    /**
+     * @return string
+     */
+    public function getFileType(): string
     {
         return $this->fileType;
     }
 
-    public function getSize()
+    /**
+     * @return int
+     */
+    public function getSize(): int
     {
         return $this->size;
-    }
-
-    public function loadFromFile($filename) {
-        $file = fopen($filename, 'r');
-        // fseek($file, 0x02);
-
-        if (filesize($filename) <= 254) {
-            $block = fread($file, filesize($filename));
-            $sector = $this->get_first_free_sector();
-        } else {
-            $block = fread($file, 254);
-        }
-
-        var_dump($block);
-        fclose($file);
     }
 }

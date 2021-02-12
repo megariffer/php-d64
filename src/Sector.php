@@ -2,9 +2,18 @@
 
 namespace PhpD64;
 
+/**
+ * Class Sector
+ *
+ * @package PhpD64
+ */
 class Sector
 {
 
+    /**
+     * Define the HEX value for an empty byte
+     *
+     */
     protected const DEFAULT_EMPTY_BYTE = '$00';
 
     /**
@@ -19,6 +28,12 @@ class Sector
      */
     protected $rawData;
 
+    /**
+     * Sector constructor
+     *
+     * @param int    $offset
+     * @param string $track_data
+     */
     public function __construct(int $offset, string $track_data)
     {
         $this->offset = $offset;
@@ -78,6 +93,11 @@ class Sector
         return $this;
     }
 
+    /**
+     * @param string $byte
+     *
+     * @return string
+     */
     public function createEmptySectorData(string $byte = self::DEFAULT_EMPTY_BYTE): string
     {
         $data = '';
@@ -89,16 +109,25 @@ class Sector
         return $data;
     }
 
+    /**
+     * @return null
+     */
     public function createEmptyDirectorySector()
     {
         return null;
     }
 
+    /**
+     * @return null
+     */
     public function createFirstDirectoryEntry()
     {
         return null;
     }
 
+    /**
+     * @return null
+     */
     public function createEmptyBAMSector()
     {
         return null;

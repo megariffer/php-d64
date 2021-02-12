@@ -2,6 +2,11 @@
 
 namespace PhpD64;
 
+/**
+ * Class Track
+ *
+ * @package PhpD64
+ */
 class Track
 {
 
@@ -24,6 +29,13 @@ class Track
      */
     protected $offset;
 
+    /**
+     * Track constructor.
+     *
+     * @param $offset
+     * @param $sector_count
+     * @param $track_data
+     */
     public function __construct($offset, $sector_count, $track_data)
     {
         $this->sectorCount = $sector_count;
