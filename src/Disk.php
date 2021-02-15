@@ -108,6 +108,9 @@ class Disk
     {
         $this->filename = $filename;
         $this->tracks = $this->createTrackStructure();
+        $this->header = $this->getHeader();
+        $this->name = $this->getName();
+        $this->id = $this->getId();
         $this->getDirectory();
     }
 
