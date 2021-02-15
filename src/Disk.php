@@ -117,7 +117,7 @@ class Disk
     /**
      * @param string $filename
      */
-    public function create_empty(string $filename): void
+    public function createEmpty(string $filename): void
     {
         $this->tracks = $this->createTrackStructure();
         $this->filename = $filename;
@@ -129,18 +129,17 @@ class Disk
      */
     private function readOneDirectorySector(Sector $sector): array
     {
-        $directory = array();
+        $directory = [];
         $offset = 0;
         for ($x = 0; $x <= 8; $x++) {
             $file_type = $sector->getByteValue($offset + 0x02);
             $actual_file_type = substr(base_convert($file_type, 16, 2), -4);
-            $file_sector = array(
+            $file_sector = [
                 'track' => $sector->getByteValue($offset + 0x03),
                 'sector' => $sector->getByteValue($offset + 0x04)
-            );
+            ];
             $file_name = trim($sector->getRawData($offset + 0x05, 16), chr(0xA0));
-            $file_size = ord($sector->getRawData($offset + 0x1E, 1)) + ord($sector->getRawData($offset + 0x1F,
-                                                                                               1));
+            $file_size = ord($sector->getRawData($offset + 0x1E, 1)) + ord($sector->getRawData($offset + 0x1F, 1));
             $offset += 0x20;
 
             if ($actual_file_type !== '0') {
@@ -184,20 +183,20 @@ class Disk
             $directory = $this->readOneDirectorySector($sector);
 
             // Next directory track location is stored on first two bytes of sector
-            $next_directory_sector_location = array(
+            $next_directory_sector_location = [
                 'track' => ord($sector->getRawData(0x00, 1)),
                 'sector' => ord($sector->getRawData(0x01, 1))
-            );
+            ];
 
             for ($x = 1; $x <= self::DIRECTORY_SECTOR_COUNT; $x++) {
                 $next_track = $this->tracks[$next_directory_sector_location['track']];
                 $next_sector = $next_track->getSector($next_directory_sector_location['sector']);
                 // Only read next sector if location is valid
                 if (ord($next_sector->getRawData(0x00, 1)) != 0) {
-                    $next_directory_sector_location = array(
+                    $next_directory_sector_location = [
                         'track' => ord($next_sector->getRawData(0x00, 1)),
                         'sector' => ord($next_sector->getRawData(0x01, 1))
-                    );
+                    ];
                     $next_track = $this->tracks[$next_directory_sector_location['track']];
                     $next_sector = $next_track->getSector($next_directory_sector_location['sector']);
                     $next_directory_sector = $this->readOneDirectorySector($next_sector);
@@ -289,17 +288,17 @@ class Disk
     /**
      *
      */
-    public function getFirstFreeSector() {
+    public function getFirstFreeSector()
+    {
         $sector = $this->tracks[self::DIRECTORY_TRACK]->getSector(self::BAM_SECTOR);
         $offset = 0;
         $free_blocks = 0;
         for ($i = 1; $i <= 35; $i++) {
             $offset = $offset + 4;
             if ($i != self::DIRECTORY_TRACK) {
-                $free_blocks = $free_blocks + ord(substr($sector->getRawData($offset, 4), 0, 1));
+                $free_blocks += ord(substr($sector->getRawData($offset, 4), 0, 1));
             }
         }
-
     }
 
     /**
@@ -335,44 +334,44 @@ class Disk
         */
 
         $track_layout = [
-            array('sector_count' => 21, 'offset' => '$00000'),
-            array('sector_count' => 21, 'offset' => '$01500'),
-            array('sector_count' => 21, 'offset' => '$02A00'),
-            array('sector_count' => 21, 'offset' => '$03F00'),
-            array('sector_count' => 21, 'offset' => '$05400'),
-            array('sector_count' => 21, 'offset' => '$06900'),
-            array('sector_count' => 21, 'offset' => '$07E00'),
-            array('sector_count' => 21, 'offset' => '$09300'),
-            array('sector_count' => 21, 'offset' => '$0A800'),
-            array('sector_count' => 21, 'offset' => '$0BD00'),
-            array('sector_count' => 21, 'offset' => '$0D200'),
-            array('sector_count' => 21, 'offset' => '$0E700'),
-            array('sector_count' => 21, 'offset' => '$0FC00'),
-            array('sector_count' => 21, 'offset' => '$11100'),
-            array('sector_count' => 21, 'offset' => '$12600'),
-            array('sector_count' => 21, 'offset' => '$13B00'),
-            array('sector_count' => 21, 'offset' => '$15000'),
-            array('sector_count' => 19, 'offset' => '$16500'),
-            array('sector_count' => 19, 'offset' => '$17800'),
-            array('sector_count' => 19, 'offset' => '$18B00'),
-            array('sector_count' => 19, 'offset' => '$19E00'),
-            array('sector_count' => 19, 'offset' => '$1B100'),
-            array('sector_count' => 19, 'offset' => '$1C400'),
-            array('sector_count' => 18, 'offset' => '$1D700'),
-            array('sector_count' => 18, 'offset' => '$1EA00'),
-            array('sector_count' => 18, 'offset' => '$1FC00'),
-            array('sector_count' => 18, 'offset' => '$20E00'),
-            array('sector_count' => 18, 'offset' => '$22000'),
-            array('sector_count' => 18, 'offset' => '$23200'),
-            array('sector_count' => 17, 'offset' => '$24400'),
-            array('sector_count' => 17, 'offset' => '$25600'),
-            array('sector_count' => 17, 'offset' => '$26700'),
-            array('sector_count' => 17, 'offset' => '$27800'),
-            array('sector_count' => 17, 'offset' => '$28900'),
-            array('sector_count' => 17, 'offset' => '$29A00')
+            ['sector_count' => 21, 'offset' => '$00000'],
+            ['sector_count' => 21, 'offset' => '$01500'],
+            ['sector_count' => 21, 'offset' => '$02A00'],
+            ['sector_count' => 21, 'offset' => '$03F00'],
+            ['sector_count' => 21, 'offset' => '$05400'],
+            ['sector_count' => 21, 'offset' => '$06900'],
+            ['sector_count' => 21, 'offset' => '$07E00'],
+            ['sector_count' => 21, 'offset' => '$09300'],
+            ['sector_count' => 21, 'offset' => '$0A800'],
+            ['sector_count' => 21, 'offset' => '$0BD00'],
+            ['sector_count' => 21, 'offset' => '$0D200'],
+            ['sector_count' => 21, 'offset' => '$0E700'],
+            ['sector_count' => 21, 'offset' => '$0FC00'],
+            ['sector_count' => 21, 'offset' => '$11100'],
+            ['sector_count' => 21, 'offset' => '$12600'],
+            ['sector_count' => 21, 'offset' => '$13B00'],
+            ['sector_count' => 21, 'offset' => '$15000'],
+            ['sector_count' => 19, 'offset' => '$16500'],
+            ['sector_count' => 19, 'offset' => '$17800'],
+            ['sector_count' => 19, 'offset' => '$18B00'],
+            ['sector_count' => 19, 'offset' => '$19E00'],
+            ['sector_count' => 19, 'offset' => '$1B100'],
+            ['sector_count' => 19, 'offset' => '$1C400'],
+            ['sector_count' => 18, 'offset' => '$1D700'],
+            ['sector_count' => 18, 'offset' => '$1EA00'],
+            ['sector_count' => 18, 'offset' => '$1FC00'],
+            ['sector_count' => 18, 'offset' => '$20E00'],
+            ['sector_count' => 18, 'offset' => '$22000'],
+            ['sector_count' => 18, 'offset' => '$23200'],
+            ['sector_count' => 17, 'offset' => '$24400'],
+            ['sector_count' => 17, 'offset' => '$25600'],
+            ['sector_count' => 17, 'offset' => '$26700'],
+            ['sector_count' => 17, 'offset' => '$27800'],
+            ['sector_count' => 17, 'offset' => '$28900'],
+            ['sector_count' => 17, 'offset' => '$29A00']
         ];
 
-        $tracks = array();
+        $tracks = [];
 
         if ($this->filename) {
             $file = fopen($this->filename, 'r');
