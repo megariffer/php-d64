@@ -378,7 +378,7 @@ class Disk
             foreach ($track_layout as $track) {
                 fseek($file, hexdec($track['offset']));
                 $track_data = fread($file, $track['sector_count'] * 256);
-                $tracks[count($tracks)+1] = new Track($track['offset'], $track['sector_count'], $track_data);
+                $tracks[count($tracks) + 1] = new Track($track['offset'], $track['sector_count'], $track_data);
             }
             fclose($file);
         } else {

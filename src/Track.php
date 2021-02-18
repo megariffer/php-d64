@@ -80,5 +80,4 @@ class Track
     {
         return $this->sectorCount;
     }
-
 }
