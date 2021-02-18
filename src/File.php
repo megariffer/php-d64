@@ -106,12 +106,30 @@ class File
     }
 
     /**
-     * @param $first_sector
-     * @param $tracks
+     * Set the locations of all the sectors this file occupies.
+     *
+     * The first two bytes of each sector indicate the location of the next track/sector of the file.
+     * If the track is set to $00, then it is the last sector of the file.
+     *
+     * @param array $first_sector_location
+     * @param Track[] $tracks
      */
-    public function setSectors($first_sector, $tracks): void
+    public function setSectors(array $first_sector_location, array $tracks): void
     {
-        $this->sectors[] = $first_sector;
+        if ($first_sector_location['track'] !== 0) {
+            $next_sector_location = $first_sector_location;
+            do {
+                $this->sectors[] = $next_sector_location;
+
+                $track = $tracks[$next_sector_location['track']];
+                $sector = $track->getSector($next_sector_location['sector']);
+
+                $next_sector_location = [
+                    'track' => ord($sector->getRawData(0x00, 1)),
+                    'sector' => ord($sector->getRawData(0x01, 1))
+                ];
+            } while (ord($sector->getRawData(0x00, 1)) != 0);
+        }
     }
 
     /**
