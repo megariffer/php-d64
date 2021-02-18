@@ -41,7 +41,7 @@ class Track
         $this->sectorCount = $sector_count;
         $this->offset = $offset;
 
-        for ($key = 0; $key <= $sector_count - 1; $key++) {
+        for ($key = 0; $key <= $sector_count; $key++) {
             $offset = $key * 256;
             $this->sectors[$key] = new Sector($offset, $track_data);
         }
