@@ -135,8 +135,8 @@ class Disk
             $file_type = $sector->getByteValue($offset + 0x02);
             $actual_file_type = substr(base_convert($file_type, 16, 2), -4);
             $file_sector = [
-                'track' => $sector->getByteValue($offset + 0x03),
-                'sector' => $sector->getByteValue($offset + 0x04)
+                'track' => hexdec($sector->getByteValue($offset + 0x03)),
+                'sector' => hexdec($sector->getByteValue($offset + 0x04))
             ];
             $file_name = trim($sector->getRawData($offset + 0x05, 16), chr(0xA0));
             $file_size = ord($sector->getRawData($offset + 0x1E, 1)) + ord($sector->getRawData($offset + 0x1F, 1));
@@ -334,41 +334,41 @@ class Disk
         */
 
         $track_layout = [
-            ['sector_count' => 21, 'offset' => '$00000'],
-            ['sector_count' => 21, 'offset' => '$01500'],
-            ['sector_count' => 21, 'offset' => '$02A00'],
-            ['sector_count' => 21, 'offset' => '$03F00'],
-            ['sector_count' => 21, 'offset' => '$05400'],
-            ['sector_count' => 21, 'offset' => '$06900'],
-            ['sector_count' => 21, 'offset' => '$07E00'],
-            ['sector_count' => 21, 'offset' => '$09300'],
-            ['sector_count' => 21, 'offset' => '$0A800'],
-            ['sector_count' => 21, 'offset' => '$0BD00'],
-            ['sector_count' => 21, 'offset' => '$0D200'],
-            ['sector_count' => 21, 'offset' => '$0E700'],
-            ['sector_count' => 21, 'offset' => '$0FC00'],
-            ['sector_count' => 21, 'offset' => '$11100'],
-            ['sector_count' => 21, 'offset' => '$12600'],
-            ['sector_count' => 21, 'offset' => '$13B00'],
-            ['sector_count' => 21, 'offset' => '$15000'],
-            ['sector_count' => 19, 'offset' => '$16500'],
-            ['sector_count' => 19, 'offset' => '$17800'],
-            ['sector_count' => 19, 'offset' => '$18B00'],
-            ['sector_count' => 19, 'offset' => '$19E00'],
-            ['sector_count' => 19, 'offset' => '$1B100'],
-            ['sector_count' => 19, 'offset' => '$1C400'],
-            ['sector_count' => 18, 'offset' => '$1D700'],
-            ['sector_count' => 18, 'offset' => '$1EA00'],
-            ['sector_count' => 18, 'offset' => '$1FC00'],
-            ['sector_count' => 18, 'offset' => '$20E00'],
-            ['sector_count' => 18, 'offset' => '$22000'],
-            ['sector_count' => 18, 'offset' => '$23200'],
-            ['sector_count' => 17, 'offset' => '$24400'],
-            ['sector_count' => 17, 'offset' => '$25600'],
-            ['sector_count' => 17, 'offset' => '$26700'],
-            ['sector_count' => 17, 'offset' => '$27800'],
-            ['sector_count' => 17, 'offset' => '$28900'],
-            ['sector_count' => 17, 'offset' => '$29A00']
+            ['sector_count' => 21, 'offset' => '00000'],
+            ['sector_count' => 21, 'offset' => '01500'],
+            ['sector_count' => 21, 'offset' => '02A00'],
+            ['sector_count' => 21, 'offset' => '03F00'],
+            ['sector_count' => 21, 'offset' => '05400'],
+            ['sector_count' => 21, 'offset' => '06900'],
+            ['sector_count' => 21, 'offset' => '07E00'],
+            ['sector_count' => 21, 'offset' => '09300'],
+            ['sector_count' => 21, 'offset' => '0A800'],
+            ['sector_count' => 21, 'offset' => '0BD00'],
+            ['sector_count' => 21, 'offset' => '0D200'],
+            ['sector_count' => 21, 'offset' => '0E700'],
+            ['sector_count' => 21, 'offset' => '0FC00'],
+            ['sector_count' => 21, 'offset' => '11100'],
+            ['sector_count' => 21, 'offset' => '12600'],
+            ['sector_count' => 21, 'offset' => '13B00'],
+            ['sector_count' => 21, 'offset' => '15000'],
+            ['sector_count' => 19, 'offset' => '16500'],
+            ['sector_count' => 19, 'offset' => '17800'],
+            ['sector_count' => 19, 'offset' => '18B00'],
+            ['sector_count' => 19, 'offset' => '19E00'],
+            ['sector_count' => 19, 'offset' => '1B100'],
+            ['sector_count' => 19, 'offset' => '1C400'],
+            ['sector_count' => 18, 'offset' => '1D700'],
+            ['sector_count' => 18, 'offset' => '1EA00'],
+            ['sector_count' => 18, 'offset' => '1FC00'],
+            ['sector_count' => 18, 'offset' => '20E00'],
+            ['sector_count' => 18, 'offset' => '22000'],
+            ['sector_count' => 18, 'offset' => '23200'],
+            ['sector_count' => 17, 'offset' => '24400'],
+            ['sector_count' => 17, 'offset' => '25600'],
+            ['sector_count' => 17, 'offset' => '26700'],
+            ['sector_count' => 17, 'offset' => '27800'],
+            ['sector_count' => 17, 'offset' => '28900'],
+            ['sector_count' => 17, 'offset' => '29A00']
         ];
 
         $tracks = [];
