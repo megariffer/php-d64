@@ -14,7 +14,7 @@ class Sector
      * Define the HEX value for an empty byte
      *
      */
-    protected const DEFAULT_EMPTY_BYTE = '$00';
+    protected const DEFAULT_EMPTY_BYTE = '00';
 
     /**
      * Data offset in HEX
@@ -31,10 +31,10 @@ class Sector
     /**
      * Sector constructor
      *
-     * @param int    $offset
-     * @param string $track_data
+     * @param int $offset
+     * @param string|null $track_data
      */
-    public function __construct(int $offset, string $track_data)
+    public function __construct(int $offset, ?string $track_data)
     {
         $this->offset = $offset;
 

@@ -61,6 +61,70 @@ class Disk
      */
     protected const SECTOR_INTERLEAVE = 10;
 
+    /*
+    * D64 disk track layout from http://unusedino.de/ec64/technical/formats/d64.html
+    *
+        Track #Sect #SectorsIn D64 Offset   Track #Sect #SectorsIn D64 Offset
+        ----- ----- ---------- ----------   ----- ----- ---------- ----------
+         1     21       0       $00000      21     19     414       $19E00
+         2     21      21       $01500      22     19     433       $1B100
+         3     21      42       $02A00      23     19     452       $1C400
+         4     21      63       $03F00      24     19     471       $1D700
+         5     21      84       $05400      25     18     490       $1EA00
+         6     21     105       $06900      26     18     508       $1FC00
+         7     21     126       $07E00      27     18     526       $20E00
+         8     21     147       $09300      28     18     544       $22000
+         9     21     168       $0A800      29     18     562       $23200
+        10     21     189       $0BD00      30     18     580       $24400
+        11     21     210       $0D200      31     17     598       $25600
+        12     21     231       $0E700      32     17     615       $26700
+        13     21     252       $0FC00      33     17     632       $27800
+        14     21     273       $11100      34     17     649       $28900
+        15     21     294       $12600      35     17     666       $29A00
+        16     21     315       $13B00      36(*)  17     683       $2AB00
+        17     21     336       $15000      37(*)  17     700       $2BC00
+        18     19     357       $16500      38(*)  17     717       $2CD00
+        19     19     376       $17800      39(*)  17     734       $2DE00
+        20     19     395       $18B00      40(*)  17     751       $2EF00
+    */
+    protected const TRACK_LAYOUT = [
+        ['sector_count' => 21, 'offset' => '00000'],
+        ['sector_count' => 21, 'offset' => '01500'],
+        ['sector_count' => 21, 'offset' => '02A00'],
+        ['sector_count' => 21, 'offset' => '03F00'],
+        ['sector_count' => 21, 'offset' => '05400'],
+        ['sector_count' => 21, 'offset' => '06900'],
+        ['sector_count' => 21, 'offset' => '07E00'],
+        ['sector_count' => 21, 'offset' => '09300'],
+        ['sector_count' => 21, 'offset' => '0A800'],
+        ['sector_count' => 21, 'offset' => '0BD00'],
+        ['sector_count' => 21, 'offset' => '0D200'],
+        ['sector_count' => 21, 'offset' => '0E700'],
+        ['sector_count' => 21, 'offset' => '0FC00'],
+        ['sector_count' => 21, 'offset' => '11100'],
+        ['sector_count' => 21, 'offset' => '12600'],
+        ['sector_count' => 21, 'offset' => '13B00'],
+        ['sector_count' => 21, 'offset' => '15000'],
+        ['sector_count' => 19, 'offset' => '16500'],
+        ['sector_count' => 19, 'offset' => '17800'],
+        ['sector_count' => 19, 'offset' => '18B00'],
+        ['sector_count' => 19, 'offset' => '19E00'],
+        ['sector_count' => 19, 'offset' => '1B100'],
+        ['sector_count' => 19, 'offset' => '1C400'],
+        ['sector_count' => 18, 'offset' => '1D700'],
+        ['sector_count' => 18, 'offset' => '1EA00'],
+        ['sector_count' => 18, 'offset' => '1FC00'],
+        ['sector_count' => 18, 'offset' => '20E00'],
+        ['sector_count' => 18, 'offset' => '22000'],
+        ['sector_count' => 18, 'offset' => '23200'],
+        ['sector_count' => 17, 'offset' => '24400'],
+        ['sector_count' => 17, 'offset' => '25600'],
+        ['sector_count' => 17, 'offset' => '26700'],
+        ['sector_count' => 17, 'offset' => '27800'],
+        ['sector_count' => 17, 'offset' => '28900'],
+        ['sector_count' => 17, 'offset' => '29A00']
+    ];
+
     /**
      * File name
      *
@@ -101,17 +165,21 @@ class Disk
      */
     protected $header;
 
+    public function __construct()
+    {
+        $this->tracks = $this->createTrackStructure();
+    }
+
     /**
      * @param string $filename
      */
     public function loadFromFile(string $filename): void
     {
+        $this->readDataFomFile($filename);
         $this->filename = $filename;
-        $this->tracks = $this->createTrackStructure();
         $this->header = $this->getHeader();
         $this->name = $this->getName();
         $this->id = $this->getId();
-        $this->getDirectory();
     }
 
     /**
@@ -119,8 +187,8 @@ class Disk
      */
     public function createEmpty(string $filename): void
     {
-        $this->tracks = $this->createTrackStructure();
         $this->filename = $filename;
+        $this->tracks = $this->createTrackStructure();
     }
 
     /**
@@ -148,6 +216,7 @@ class Disk
                 $file->setSize($file_size);
                 $file->setFileType($actual_file_type);
                 $file->setSectors($file_sector, $this->tracks);
+                $file->setRawData($this->getTracks());
                 $directory[] = $file;
             }
         }
@@ -306,87 +375,26 @@ class Disk
      */
     public function createTrackStructure(): array
     {
-        /*
-         * D64 disk track layout from http://unusedino.de/ec64/technical/formats/d64.html
-         *
-        Track #Sect #SectorsIn D64 Offset   Track #Sect #SectorsIn D64 Offset
-        ----- ----- ---------- ----------   ----- ----- ---------- ----------
-         1     21       0       $00000      21     19     414       $19E00
-         2     21      21       $01500      22     19     433       $1B100
-         3     21      42       $02A00      23     19     452       $1C400
-         4     21      63       $03F00      24     19     471       $1D700
-         5     21      84       $05400      25     18     490       $1EA00
-         6     21     105       $06900      26     18     508       $1FC00
-         7     21     126       $07E00      27     18     526       $20E00
-         8     21     147       $09300      28     18     544       $22000
-         9     21     168       $0A800      29     18     562       $23200
-        10     21     189       $0BD00      30     18     580       $24400
-        11     21     210       $0D200      31     17     598       $25600
-        12     21     231       $0E700      32     17     615       $26700
-        13     21     252       $0FC00      33     17     632       $27800
-        14     21     273       $11100      34     17     649       $28900
-        15     21     294       $12600      35     17     666       $29A00
-        16     21     315       $13B00      36(*)  17     683       $2AB00
-        17     21     336       $15000      37(*)  17     700       $2BC00
-        18     19     357       $16500      38(*)  17     717       $2CD00
-        19     19     376       $17800      39(*)  17     734       $2DE00
-        20     19     395       $18B00      40(*)  17     751       $2EF00
-        */
-
-        $track_layout = [
-            ['sector_count' => 21, 'offset' => '00000'],
-            ['sector_count' => 21, 'offset' => '01500'],
-            ['sector_count' => 21, 'offset' => '02A00'],
-            ['sector_count' => 21, 'offset' => '03F00'],
-            ['sector_count' => 21, 'offset' => '05400'],
-            ['sector_count' => 21, 'offset' => '06900'],
-            ['sector_count' => 21, 'offset' => '07E00'],
-            ['sector_count' => 21, 'offset' => '09300'],
-            ['sector_count' => 21, 'offset' => '0A800'],
-            ['sector_count' => 21, 'offset' => '0BD00'],
-            ['sector_count' => 21, 'offset' => '0D200'],
-            ['sector_count' => 21, 'offset' => '0E700'],
-            ['sector_count' => 21, 'offset' => '0FC00'],
-            ['sector_count' => 21, 'offset' => '11100'],
-            ['sector_count' => 21, 'offset' => '12600'],
-            ['sector_count' => 21, 'offset' => '13B00'],
-            ['sector_count' => 21, 'offset' => '15000'],
-            ['sector_count' => 19, 'offset' => '16500'],
-            ['sector_count' => 19, 'offset' => '17800'],
-            ['sector_count' => 19, 'offset' => '18B00'],
-            ['sector_count' => 19, 'offset' => '19E00'],
-            ['sector_count' => 19, 'offset' => '1B100'],
-            ['sector_count' => 19, 'offset' => '1C400'],
-            ['sector_count' => 18, 'offset' => '1D700'],
-            ['sector_count' => 18, 'offset' => '1EA00'],
-            ['sector_count' => 18, 'offset' => '1FC00'],
-            ['sector_count' => 18, 'offset' => '20E00'],
-            ['sector_count' => 18, 'offset' => '22000'],
-            ['sector_count' => 18, 'offset' => '23200'],
-            ['sector_count' => 17, 'offset' => '24400'],
-            ['sector_count' => 17, 'offset' => '25600'],
-            ['sector_count' => 17, 'offset' => '26700'],
-            ['sector_count' => 17, 'offset' => '27800'],
-            ['sector_count' => 17, 'offset' => '28900'],
-            ['sector_count' => 17, 'offset' => '29A00']
-        ];
-
         $tracks = [];
 
-        if ($this->filename) {
-            $file = fopen($this->filename, 'r');
-            foreach ($track_layout as $track) {
-                fseek($file, hexdec($track['offset']));
-                $track_data = fread($file, $track['sector_count'] * 256);
-                $tracks[count($tracks) + 1] = new Track($track['offset'], $track['sector_count'], $track_data);
-            }
-            fclose($file);
-        } else {
-            foreach ($track_layout as $track) {
-                $tracks[] = new Track($track['offset'], $track['sector_count'], null);
-            }
+        foreach (self::TRACK_LAYOUT as $track) {
+            $tracks[] = new Track($track['offset'], $track['sector_count'], null);
         }
 
         return $tracks;
+    }
+
+    private function readDataFomFile($filename)
+    {
+        $tracks = [];
+
+        $file = fopen($filename, 'r');
+        foreach (self::TRACK_LAYOUT as $track) {
+            fseek($file, hexdec($track['offset']));
+            $track_data = fread($file, $track['sector_count'] * 256);
+            $tracks[count($tracks) + 1] = new Track($track['offset'], $track['sector_count'], $track_data);
+        }
+        fclose($file);
+        $this->tracks = $tracks;
     }
 }

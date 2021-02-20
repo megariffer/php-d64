@@ -47,22 +47,27 @@ class File
     protected $sectors;
 
     /**
+     * @param Track[] $tracks
      * @return string
      */
-    public function getRawData(): string
+    public function setRawData(array $tracks): ?string
     {
+        if (!$this->rawData) {
+            if ($sectors = $this->getSectors()) {
+                foreach ($sectors as $sector) {
+                    $track = $tracks[$sector['track']];
+                    $sector = $track->getSector($sector['sector']);
+                    $this->rawData .= $sector->getRawData();
+                }
+            }
+        }
+
         return $this->rawData;
     }
 
-    /**
-     * @param $data
-     * @return $this
-     */
-    public function setRawData($data): File
+    public function getRawData(): string
     {
-        $this->rawData = $data;
-
-        return $this;
+        return $this->rawData;
     }
 
     /**
@@ -113,8 +118,9 @@ class File
      *
      * @param array $first_sector_location
      * @param Track[] $tracks
+     * @return array|null
      */
-    public function setSectors(array $first_sector_location, array $tracks): void
+    public function setSectors(array $first_sector_location, array $tracks): ?array
     {
         if ($first_sector_location['track'] !== 0) {
             $next_sector_location = $first_sector_location;
@@ -130,12 +136,14 @@ class File
                 ];
             } while (ord($sector->getRawData(0x00, 1)) != 0);
         }
+
+        return $this->sectors;
     }
 
     /**
      * @return array
      */
-    public function getSectors(): array
+    public function getSectors(): ?array
     {
         return $this->sectors;
     }
