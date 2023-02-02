@@ -128,29 +128,29 @@ class Disk
     /**
      * File name
      *
-     * @var    string
+     * @var string
      */
     protected $filename;
 
     /**
      * Tracks
      *
-     * @var    Track[]
+     * @var Track[]
      */
     protected $tracks;
 
     /**
-     * @var    File[]
+     * @var File[]
      */
     protected $directory;
 
     /**
-     * @var    string
+     * @var string
      */
     protected $name;
 
     /**
-     * @var    string
+     * @var string
      */
     protected $id;
 
@@ -161,7 +161,7 @@ class Disk
      *      0xa5 - 0xa6: DOS type
      */
     /**
-     * @var    string
+     * @var string
      */
     protected $header;
 
@@ -180,9 +180,12 @@ class Disk
         $this->header = $this->getHeader();
         $this->name = $this->getName();
         $this->id = $this->getId();
+        $this->getDirectory();
     }
 
     /**
+     * Create an empty disk.
+     *
      * @param string $filename
      */
     public function createEmpty(string $filename): void
@@ -192,6 +195,8 @@ class Disk
     }
 
     /**
+     * Read one directory sector.
+     *
      * @param Sector $sector
      * @return array
      */
@@ -252,24 +257,28 @@ class Disk
             $directory = $this->readOneDirectorySector($sector);
 
             // Next directory track location is stored on first two bytes of sector
+            $next_track_location = ord($sector->getRawData(0x00, 1));
+            $next_sector_location = ord($sector->getRawData(0x01, 1));
             $next_directory_sector_location = [
-                'track' => ord($sector->getRawData(0x00, 1)),
-                'sector' => ord($sector->getRawData(0x01, 1))
+                'track' => $next_track_location,
+                'sector' => $next_sector_location,
             ];
 
             for ($x = 1; $x <= self::DIRECTORY_SECTOR_COUNT; $x++) {
-                $next_track = $this->tracks[$next_directory_sector_location['track']];
-                $next_sector = $next_track->getSector($next_directory_sector_location['sector']);
-                // Only read next sector if location is valid
-                if (ord($next_sector->getRawData(0x00, 1)) != 0) {
-                    $next_directory_sector_location = [
-                        'track' => ord($next_sector->getRawData(0x00, 1)),
-                        'sector' => ord($next_sector->getRawData(0x01, 1))
-                    ];
+                if ($next_track_location && $next_sector_location) {
                     $next_track = $this->tracks[$next_directory_sector_location['track']];
                     $next_sector = $next_track->getSector($next_directory_sector_location['sector']);
-                    $next_directory_sector = $this->readOneDirectorySector($next_sector);
-                    $directory = array_merge($directory, $next_directory_sector);
+                    // Only read next sector if location is valid
+                    if (ord($next_sector->getRawData(0x00, 1)) != 0) {
+                        $next_directory_sector_location = [
+                            'track' => ord($next_sector->getRawData(0x00, 1)),
+                            'sector' => ord($next_sector->getRawData(0x01, 1))
+                        ];
+                        $next_track = $this->tracks[$next_directory_sector_location['track']];
+                        $next_sector = $next_track->getSector($next_directory_sector_location['sector']);
+                        $next_directory_sector = $this->readOneDirectorySector($next_sector);
+                        $directory = array_merge($directory, $next_directory_sector);
+                    }
                 }
             }
 
@@ -280,20 +289,22 @@ class Disk
     }
 
     /**
+     * Get the full disk header from the BAM sector.
+     *
      * @return string
      */
     public function getHeader(): string
     {
-        if (isset($this->header)) {
-            return $this->header;
-        } else {
+        if (!isset($this->header)) {
             $sector = $this->tracks[self::DIRECTORY_TRACK]->getSector(self::BAM_SECTOR);
             $this->header = $sector->getRawData(0xa2, 5);
-            return $this->header;
         }
+        return $this->header;
     }
 
     /**
+     * Get number of free blocks.
+     *
      * @return int
      */
     public function getFreeBlocks(): int
@@ -311,34 +322,36 @@ class Disk
     }
 
     /**
+     * Get the name of the disk from the BAM sector.
+     *
      * @return string
      */
     public function getName(): string
     {
-        if (isset($this->name)) {
-            return $this->name;
-        } else {
+        if (!isset($this->name)) {
             $sector = $this->tracks[self::DIRECTORY_TRACK]->getSector(self::BAM_SECTOR);
             $this->name = $sector->getRawData(0x90, 16);
-            return $this->name;
         }
+        return $this->name;
     }
 
     /**
+     * Get the ID of the disk from the BAM sector.
+     *
      * @return string
      */
     public function getId(): string
     {
-        if (isset($this->id)) {
-            return $this->id;
-        } else {
+        if (!isset($this->id)) {
             $sector = $this->tracks[self::DIRECTORY_TRACK]->getSector(self::BAM_SECTOR);
             $this->id = $sector->getRawData(0xa2, 2);
-            return $this->id;
         }
+        return $this->id;
     }
 
     /**
+     * Get the name of the D64 file this Disk class represents.
+     *
      * @return string
      */
     public function getFilename(): string
@@ -347,6 +360,8 @@ class Disk
     }
 
     /**
+     * Get the disk tracks.
+     *
      * @return Track[]
      */
     public function getTracks(): array
@@ -371,6 +386,8 @@ class Disk
     }
 
     /**
+     * Create basic track structure.
+     *
      * @return Track[]
      */
     public function createTrackStructure(): array
@@ -384,6 +401,14 @@ class Disk
         return $tracks;
     }
 
+    /**
+     * Read data from existing D64 file.
+     *
+     * @param $filename
+     *   The name of the file.
+     *
+     * @return void
+     */
     private function readDataFomFile($filename)
     {
         $tracks = [];
