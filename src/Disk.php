@@ -265,7 +265,7 @@ class Disk
             ];
 
             for ($x = 1; $x <= self::DIRECTORY_SECTOR_COUNT; $x++) {
-                if ($next_track_location && $next_sector_location) {
+                if ($next_track_location) {
                     $next_track = $this->tracks[$next_directory_sector_location['track']];
                     $next_sector = $next_track->getSector($next_directory_sector_location['sector']);
                     // Only read next sector if location is valid
