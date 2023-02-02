@@ -72,7 +72,7 @@ class Sector
      *
      * @return string
      */
-    public function getHexData(string $offset = '$00', int $length = 256): string
+    public function getHexData(string $offset = '00', int $length = 256): string
     {
         $hex_data = '';
         $raw_data = str_split(substr($this->rawData, hexdec($offset), $length));
