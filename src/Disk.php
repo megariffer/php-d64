@@ -167,7 +167,7 @@ class Disk
 
     public function loadFromFile(string $filename): void
     {
-        $this->readDataFomFile($filename);
+        $this->readDataFromFile($filename);
         $this->filename = $filename;
         $this->header = $this->getHeader();
         $this->name = $this->getName();
@@ -436,8 +436,6 @@ class Disk
                 'sector' => hexdec($sector->getByteValue($offset + 0x04)),
             ];
             $file_name = trim($sector->getRawData($offset + 0x05, 16), chr(0xA0));
-            if (ctype_lower($file_name)) {
-            }
             $file_size = ord($sector->getRawData($offset + 0x1E, 1)) + ord($sector->getRawData($offset + 0x1F, 1));
             $offset += 0x20;
 
@@ -465,7 +463,7 @@ class Disk
      *
      * @return void
      */
-    protected function readDataFomFile($filename): void
+    protected function readDataFromFile($filename): void
     {
         $tracks = [];
 
