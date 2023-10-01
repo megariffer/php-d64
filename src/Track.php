@@ -9,41 +9,44 @@ namespace PhpD64;
  */
 class Track
 {
+    protected int $trackNumber;
 
     /**
      * @var Sector[]
      */
-    protected $sectors;
+    protected array $sectors;
 
     /**
      * Sector count
      *
      * @var int
      */
-    protected $sectorCount;
+    protected int $sectorCount;
 
     /**
      * Data offset in HEX
      *
      * @var string
      */
-    protected $offset;
+    protected string $offset;
 
     /**
      * Track constructor.
      *
-     * @param $offset
-     * @param $sector_count
-     * @param $track_data
+     * @param string $offset
+     * @param int $track_number
+     * @param int $sector_count
+     * @param string|null $track_data
      */
-    public function __construct($offset, $sector_count, $track_data)
+    public function __construct(string $offset, int $track_number, int $sector_count, ?string $track_data)
     {
+        $this->trackNumber = $track_number;
         $this->sectorCount = $sector_count;
         $this->offset = $offset;
 
-        for ($key = 0; $key <= $sector_count; $key++) {
-            $offset = $key * 256;
-            $this->sectors[$key] = new Sector($offset, $track_data);
+        for ($sector_number = 0; $sector_number < $sector_count; $sector_number++) {
+            $offset = $sector_number * 256;
+            $this->sectors[$sector_number] = new Sector($offset, $track_number, $sector_number, $track_data);
         }
     }
 
@@ -79,5 +82,17 @@ class Track
     public function getSectorCount(): int
     {
         return $this->sectorCount;
+    }
+
+    public function getFreeSectors(): array
+    {
+        $free_sectors = [];
+        foreach ($this->getSectors() as $sector_number => $sector) {
+            if ($sector->isFree()) {
+                continue;
+            }
+            $free_sectors[] = $sector_number;
+        }
+        return $free_sectors;
     }
 }

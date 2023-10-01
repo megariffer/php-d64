@@ -1,0 +1,43 @@
+@font-face {
+    font-family: 'Commodore';
+    src: url('C64_Pro_Mono-STYLE.woff2') format('woff2');
+}
+
+body {
+    font-family: 'Commodore', monospace;
+    background-color: #352879;
+    color: #6c5eb5;
+}
+
+.d64-directory .header {
+    display: flex;
+}
+
+.d64-directory .header :nth-child(1) {
+    width: 32px;
+}
+
+.d64-directory .files .file {
+    display: flex;
+}
+
+.d64-directory .files .file .size {
+    width: 72px;
+}
+
+.d64-directory .files .file .name {
+}
+
+.d64-directory .files .file .type {
+    width: 64px;
+    text-align: right;
+}
+
+.d64-directory .header .inverse{
+    color: #352879;
+    background-color: #6c5eb5;
+}
+
+.d64-directory .files .file {
+
+}

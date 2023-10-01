@@ -9,10 +9,9 @@ namespace PhpD64;
  */
 class Disk
 {
-
     /* BAM layout (18/0):
          Bytes: $00-01: Track/Sector location of the first directory sector (should
-                be set to 18/1 but it doesn't matter, and don't trust  what
+                be set to 18/1, but it doesn't matter, and don't trust  what
                 is there, always go to 18/1 for first directory entry)
             02: Disk DOS version type (see note below)
                   $41 ("A")
@@ -35,6 +34,11 @@ class Disk
      * The number of the sector containing the BAM (Block Availability Map)
      */
     protected const BAM_SECTOR = 0;
+
+    /**
+     * The length of the BAM entries in bytes
+     */
+    protected const BAM_ENTRY_LENGTH = 4;
 
     /**
      * The number of the directory track
@@ -122,37 +126,31 @@ class Disk
         ['sector_count' => 17, 'offset' => '26700'],
         ['sector_count' => 17, 'offset' => '27800'],
         ['sector_count' => 17, 'offset' => '28900'],
-        ['sector_count' => 17, 'offset' => '29A00']
+        ['sector_count' => 17, 'offset' => '29A00'],
     ];
 
     /**
      * File name
-     *
-     * @var string
      */
-    protected $filename;
+    protected string $filename;
 
     /**
      * Tracks
      *
-     * @var Track[]
+     * @var array<Track>
      */
-    protected $tracks;
+    protected array $tracks;
 
     /**
      * @var File[]
      */
-    protected $directory;
+    protected array $directory;
 
-    /**
-     * @var string
-     */
-    protected $name;
+    protected string $name;
 
-    /**
-     * @var string
-     */
-    protected $id;
+    protected string $id;
+
+    protected array $bam;
 
     /*
      * header consists of 5 bytes from 0xa2 to 0xa6
@@ -160,19 +158,13 @@ class Disk
      *             0xa4: one unused byte
      *      0xa5 - 0xa6: DOS type
      */
-    /**
-     * @var string
-     */
-    protected $header;
+    protected string $header;
 
     public function __construct()
     {
         $this->tracks = $this->createTrackStructure();
     }
 
-    /**
-     * @param string $filename
-     */
     public function loadFromFile(string $filename): void
     {
         $this->readDataFomFile($filename);
@@ -180,13 +172,13 @@ class Disk
         $this->header = $this->getHeader();
         $this->name = $this->getName();
         $this->id = $this->getId();
-        $this->getDirectory();
+        $this->directory = $this->getDirectory();
+        $this->bam = $this->getBam();
+        $this->setSectorOccupancyByBam($this->getBam());
     }
 
     /**
      * Create an empty disk.
-     *
-     * @param string $filename
      */
     public function createEmpty(string $filename): void
     {
@@ -195,47 +187,12 @@ class Disk
     }
 
     /**
-     * Read one directory sector.
-     *
-     * @param Sector $sector
-     * @return array
-     */
-    private function readOneDirectorySector(Sector $sector): array
-    {
-        $directory = [];
-        $offset = 0;
-        for ($x = 0; $x <= 8; $x++) {
-            $file_type = $sector->getByteValue($offset + 0x02);
-            $actual_file_type = substr(base_convert($file_type, 16, 2), -4);
-            $file_sector = [
-                'track' => hexdec($sector->getByteValue($offset + 0x03)),
-                'sector' => hexdec($sector->getByteValue($offset + 0x04))
-            ];
-            $file_name = trim($sector->getRawData($offset + 0x05, 16), chr(0xA0));
-            $file_size = ord($sector->getRawData($offset + 0x1E, 1)) + ord($sector->getRawData($offset + 0x1F, 1));
-            $offset += 0x20;
-
-            if ($actual_file_type !== '0') {
-                $file = new File();
-                $file->setName($file_name);
-                $file->setSize($file_size);
-                $file->setFileType($actual_file_type);
-                $file->setSectors($file_sector, $this->tracks);
-                $file->setRawData($this->getTracks());
-                $directory[] = $file;
-            }
-        }
-
-        return $directory;
-    }
-
-    /**
      * Get directory
      *
      * *** D64 (Electronic form of a physical 1541 disk)
      * *** Document revision: 1.9
      * *** Last updated: March 11, 2004
-     * *** Contributors/sources: Immers/Neufeld "Inside Commodore  DOS"
+     * *** Contributors/sources: Immers/Neufeld "Inside Commodore DOS"
      *                           Wolfgang Moser
      * "The directory track should be contained totally on track 18. Sectors
      * 1-18 contain the entries and sector 0 contains the BAM (Block
@@ -251,108 +208,107 @@ class Disk
      */
     public function getDirectory(): array
     {
-        if (!$this->directory) {
-            $sector = $this->tracks[self::DIRECTORY_TRACK]
-                ->getSector(self::FIRST_DIRECTORY_SECTOR);
-            $directory = $this->readOneDirectorySector($sector);
-
-            // Next directory track location is stored on first two bytes of sector
-            $next_track_location = ord($sector->getRawData(0x00, 1));
-            $next_sector_location = ord($sector->getRawData(0x01, 1));
-            $next_directory_sector_location = [
-                'track' => $next_track_location,
-                'sector' => $next_sector_location,
-            ];
-
-            for ($x = 1; $x <= self::DIRECTORY_SECTOR_COUNT; $x++) {
-                if ($next_track_location) {
-                    $next_track = $this->tracks[$next_directory_sector_location['track']];
-                    $next_sector = $next_track->getSector($next_directory_sector_location['sector']);
-                    // Only read next sector if location is valid
-                    if (ord($next_sector->getRawData(0x00, 1)) != 0) {
-                        $next_directory_sector_location = [
-                            'track' => ord($next_sector->getRawData(0x00, 1)),
-                            'sector' => ord($next_sector->getRawData(0x01, 1))
-                        ];
-                        $next_track = $this->tracks[$next_directory_sector_location['track']];
-                        $next_sector = $next_track->getSector($next_directory_sector_location['sector']);
-                        $next_directory_sector = $this->readOneDirectorySector($next_sector);
-                        $directory = array_merge($directory, $next_directory_sector);
-                    }
-                }
-            }
-
-            $this->directory = $directory;
+        if (isset($this->directory)) {
+            return $this->directory;
         }
 
-        return $this->directory;
+        $sector = $this->tracks[self::DIRECTORY_TRACK]->getSector(self::FIRST_DIRECTORY_SECTOR);
+        $directory = $this->readOneDirectorySector($sector);
+
+        // Next directory track location is stored on first two bytes of sector
+        $next_track_location = ord($sector->getRawData(0x00, 1));
+        $next_sector_location = ord($sector->getRawData(0x01, 1));
+        $next_directory_sector_location = [
+            'track' => $next_track_location,
+            'sector' => $next_sector_location,
+        ];
+
+        for ($x = 1; $x <= self::DIRECTORY_SECTOR_COUNT; $x++) {
+            if (!$next_track_location) {
+                continue;
+            }
+
+            $next_track = $this->tracks[$next_directory_sector_location['track']];
+            $next_sector = $next_track->getSector($next_directory_sector_location['sector']);
+
+            // Only read next sector if location is valid
+            if (0 === ord($next_sector->getRawData(0x00, 1))) {
+                continue;
+            }
+
+            $next_directory_sector_location = [
+                'track' => ord($next_sector->getRawData(0x00, 1)),
+                'sector' => ord($next_sector->getRawData(0x01, 1)),
+            ];
+            $next_track = $this->tracks[$next_directory_sector_location['track']];
+            $next_sector = $next_track->getSector($next_directory_sector_location['sector']);
+            $next_directory_sector = $this->readOneDirectorySector($next_sector);
+            $directory = array_merge($directory, $next_directory_sector);
+        }
+
+        return $directory;
     }
 
     /**
      * Get the full disk header from the BAM sector.
-     *
-     * @return string
      */
     public function getHeader(): string
     {
-        if (!isset($this->header)) {
-            $sector = $this->tracks[self::DIRECTORY_TRACK]->getSector(self::BAM_SECTOR);
-            $this->header = $sector->getRawData(0xa2, 5);
+        if (isset($this->header)) {
+            return $this->header;
         }
-        return $this->header;
+        $sector = $this->tracks[self::DIRECTORY_TRACK]->getSector(self::BAM_SECTOR);
+        return $sector->getRawData(0xa2, 5);
     }
 
     /**
      * Get number of free blocks.
-     *
-     * @return int
      */
     public function getFreeBlocks(): int
     {
         $sector = $this->tracks[self::DIRECTORY_TRACK]->getSector(self::BAM_SECTOR);
         $offset = 0;
         $free_blocks = 0;
-        for ($i = 1; $i <= 35; $i++) {
-            $offset = $offset + 4;
-            if ($i != self::DIRECTORY_TRACK) {
-                $free_blocks = $free_blocks + ord(substr($sector->getRawData($offset, 4), 0, 1));
+
+        for ($i = 1; $i <= count(self::TRACK_LAYOUT); $i++) {
+            $offset += 4;
+
+            if (self::DIRECTORY_TRACK === $i) {
+                continue;
             }
+
+            $free_blocks += ord(substr($sector->getRawData($offset, 4), 0, 1));
         }
+
         return $free_blocks;
     }
 
     /**
      * Get the name of the disk from the BAM sector.
-     *
-     * @return string
      */
     public function getName(): string
     {
-        if (!isset($this->name)) {
-            $sector = $this->tracks[self::DIRECTORY_TRACK]->getSector(self::BAM_SECTOR);
-            $this->name = $sector->getRawData(0x90, 16);
+        if (isset($this->name)) {
+            return $this->name;
         }
-        return $this->name;
+        $sector = $this->tracks[self::DIRECTORY_TRACK]->getSector(self::BAM_SECTOR);
+        return $sector->getRawData(0x90, 16);
     }
 
     /**
      * Get the ID of the disk from the BAM sector.
-     *
-     * @return string
      */
     public function getId(): string
     {
-        if (!isset($this->id)) {
-            $sector = $this->tracks[self::DIRECTORY_TRACK]->getSector(self::BAM_SECTOR);
-            $this->id = $sector->getRawData(0xa2, 2);
+        if (isset($this->id)) {
+            return $this->id;
         }
-        return $this->id;
+        $sector = $this->tracks[self::DIRECTORY_TRACK]->getSector(self::BAM_SECTOR);
+        return $sector->getRawData(0xa2, 2);
     }
 
     /**
      * Get the name of the D64 file this Disk class represents.
-     *
-     * @return string
      */
     public function getFilename(): string
     {
@@ -370,19 +326,79 @@ class Disk
     }
 
     /**
+     * Get a disk track.
      *
+     * @param int $track_id
+     *
+     * @return Track
      */
-    public function getFirstFreeSector()
+    public function getTrack(int $track_id): Track
     {
-        $sector = $this->tracks[self::DIRECTORY_TRACK]->getSector(self::BAM_SECTOR);
-        $offset = 0;
-        $free_blocks = 0;
-        for ($i = 1; $i <= 35; $i++) {
-            $offset = $offset + 4;
-            if ($i != self::DIRECTORY_TRACK) {
-                $free_blocks += ord(substr($sector->getRawData($offset, 4), 0, 1));
+        return $this->tracks[$track_id];
+    }
+
+    public function getFirstFreeSector(): ?Sector
+    {
+        $directory_track = self::DIRECTORY_TRACK;
+
+        $counter = 1;
+        while ($counter <= 17) {
+            $track_to_check = $directory_track + $counter;
+            $free_sectors = $this->getTrack($track_to_check)->getFreeSectors();
+            if (!empty($free_sectors)) {
+                return $this->getTrack($counter)->getSector(reset($free_sectors));
+            }
+
+            $track_to_check = $directory_track + $counter * -1;
+            $free_sectors = $this->getTrack($track_to_check)->getFreeSectors();
+            if (!empty($free_sectors)) {
+                return $this->getTrack($counter)->getSector(reset($free_sectors));
+            }
+
+            $counter++;
+        }
+
+        return null;
+
+        // start at sector 0
+        // add 10 (self::SECTOR_INTERLEAVE)
+        // if it is bigger than max sector,
+        // subtract max sector number 17/0, 17/10, 17/20, 17/8 (30-21), 17/18, 17/6 (28-21) etc.
+        // if after subtraction == 0, check if it is free
+        // else subtract 1 (30-21=9-1=8 [because 0 index!]), check if it is free
+        // if not free, find next free
+    }
+
+    public function getBam(): array
+    {
+        if (isset($this->bam)) {
+            return $this->bam;
+        }
+
+        $bam_sector = $this->tracks[self::DIRECTORY_TRACK]->getSector(self::BAM_SECTOR);
+        $bam = [];
+
+        foreach (self::TRACK_LAYOUT as $key => $track) {
+            $track_number = $key + 1;
+            $offset = $track_number * self::BAM_ENTRY_LENGTH;
+            $bam_entry = $bam_sector->getRawData($offset, self::BAM_ENTRY_LENGTH);
+            $flipped_binary = '';
+
+            for ($byte = 1; $byte <= 4; $byte++) {
+                $binary = str_pad(decbin(ord(substr($bam_entry, $byte - 1, 1))), 8, '0', STR_PAD_LEFT);
+                $flipped_binary .= strrev($binary);
+            }
+
+            $flipped_binary = substr($flipped_binary, 8, strlen($flipped_binary));
+            $sector_count = $track['sector_count'];
+
+            for ($i = 0; $i < $sector_count; $i++) {
+                $free = substr($flipped_binary, $i, 1);
+                $bam[$track_number][] = (int) $free;
             }
         }
+
+        return $bam;
     }
 
     /**
@@ -394,11 +410,51 @@ class Disk
     {
         $tracks = [];
 
-        foreach (self::TRACK_LAYOUT as $track) {
-            $tracks[] = new Track($track['offset'], $track['sector_count'], null);
+        foreach (self::TRACK_LAYOUT as $track_number => $track) {
+            $tracks[] = new Track($track['offset'], $track_number, $track['sector_count'], null);
         }
 
         return $tracks;
+    }
+
+    /**
+     * Read one directory sector.
+     *
+     * @param Sector $sector
+     * @return array
+     */
+    protected function readOneDirectorySector(Sector $sector): array
+    {
+        $directory = [];
+        $offset = 0;
+
+        for ($x = 0; $x <= 8; $x += 1) {
+            $file_type = $sector->getByteValue($offset + 0x02);
+            $actual_file_type = substr(base_convert($file_type, 16, 2), -4);
+            $file_sector = [
+                'track' => hexdec($sector->getByteValue($offset + 0x03)),
+                'sector' => hexdec($sector->getByteValue($offset + 0x04)),
+            ];
+            $file_name = trim($sector->getRawData($offset + 0x05, 16), chr(0xA0));
+            if (ctype_lower($file_name)) {
+            }
+            $file_size = ord($sector->getRawData($offset + 0x1E, 1)) + ord($sector->getRawData($offset + 0x1F, 1));
+            $offset += 0x20;
+
+            if ('0' === $actual_file_type) {
+                continue;
+            }
+
+            $file = new File();
+            $file->setName($file_name);
+            $file->setSize($file_size);
+            $file->setFileType($actual_file_type);
+            $file->setSectors($file_sector, $this->tracks);
+            $file->setRawData($this->getTracks());
+            $directory[] = $file;
+        }
+
+        return $directory;
     }
 
     /**
@@ -409,17 +465,30 @@ class Disk
      *
      * @return void
      */
-    private function readDataFomFile($filename)
+    protected function readDataFomFile($filename): void
     {
         $tracks = [];
 
         $file = fopen($filename, 'r');
-        foreach (self::TRACK_LAYOUT as $track) {
+        foreach (self::TRACK_LAYOUT as $track_number => $track) {
             fseek($file, hexdec($track['offset']));
             $track_data = fread($file, $track['sector_count'] * 256);
-            $tracks[count($tracks) + 1] = new Track($track['offset'], $track['sector_count'], $track_data);
+            $tracks[count($tracks) + 1] =
+                new Track($track['offset'], $track_number, $track['sector_count'], $track_data);
         }
         fclose($file);
         $this->tracks = $tracks;
+    }
+
+    protected function setSectorOccupancyByBam(array $bam)
+    {
+        foreach ($this->getTracks() as $track_number => $track) {
+            foreach ($track->getSectors() as $sector_number => $sector) {
+                if ($bam[$track_number][$sector_number]) {
+                    continue;
+                }
+                $sector->setFree();
+            }
+        }
     }
 }

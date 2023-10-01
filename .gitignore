@@ -35,3 +35,9 @@ docs
 vendor
 index.php
 files
+
+# Commodore files
+*.d64
+*.prg
+# Test file
+!test.d64

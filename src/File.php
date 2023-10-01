@@ -13,7 +13,7 @@ class File
     /**
      * @var string[]
      */
-    private static $fileTypes = [
+    private static array $fileTypes = [
       '0000' => 'DEL',
       '0001' => 'SEQ',
       '0010' => 'PRG',
@@ -24,27 +24,27 @@ class File
     /**
      * @var string
      */
-    protected $rawData;
+    protected string $rawData;
 
     /**
      * @var string
      */
-    protected $name;
+    protected string $name;
 
     /**
      * @var string
      */
-    protected $fileType;
+    protected string $fileType;
 
     /**
      * @var int
      */
-    protected $size;
+    protected int $size;
 
     /**
      * @var array
      */
-    protected $sectors;
+    protected array $sectors;
 
     /**
      * @param Track[] $tracks
@@ -52,7 +52,8 @@ class File
      */
     public function setRawData(array $tracks): ?string
     {
-        if (!$this->rawData) {
+        if (!isset($this->rawData)) {
+            $this->rawData = '';
             if ($sectors = $this->getSectors()) {
                 foreach ($sectors as $sector) {
                     $track = $tracks[$sector['track']];
@@ -122,6 +123,7 @@ class File
      */
     public function setSectors(array $first_sector_location, array $tracks): ?array
     {
+        $this->sectors = [];
         if ($first_sector_location['track'] !== 0) {
             $next_sector_location = $first_sector_location;
             do {

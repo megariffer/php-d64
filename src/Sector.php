@@ -9,7 +9,37 @@ namespace PhpD64;
  */
 class Sector
 {
+    /**
+     * @return mixed
+     */
+    public function getTrackNumber()
+    {
+        return $this->trackNumber;
+    }
 
+    /**
+     * @param mixed $trackNumber
+     */
+    public function setTrackNumber($trackNumber): void
+    {
+        $this->trackNumber = $trackNumber;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getSectorNumber()
+    {
+        return $this->sectorNumber;
+    }
+
+    /**
+     * @param mixed $sectorNumber
+     */
+    public function setSectorNumber($sectorNumber): void
+    {
+        $this->sectorNumber = $sectorNumber;
+    }
     /**
      * Define the HEX value for an empty byte
      *
@@ -23,19 +53,29 @@ class Sector
      */
     protected $offset;
 
+    protected int $trackNumber;
+
+    protected int $sectorNumber;
+
     /**
      * @var string
      */
     protected $rawData;
 
+    protected bool $isFree = true;
+
     /**
      * Sector constructor
      *
      * @param int $offset
+     * @param int $track_number
+     * @param int $sector_number
      * @param string|null $track_data
      */
-    public function __construct(int $offset, ?string $track_data)
+    public function __construct(int $offset, int $track_number, int $sector_number, ?string $track_data)
     {
+        $this->trackNumber = $track_number;
+        $this->sectorNumber = $sector_number;
         $this->offset = $offset;
 
         if ($track_data) {
@@ -83,7 +123,7 @@ class Sector
     }
 
     /**
-     * @param $data
+     * @param string $data
      * @return $this
      */
     public function setRawData(string $data): Sector
@@ -107,6 +147,18 @@ class Sector
         }
 
         return $data;
+    }
+
+    public function setFree(bool $free = false): Sector
+    {
+        $this->isFree = $free;
+
+        return $this;
+    }
+
+    public function isFree(): bool
+    {
+        return $this->isFree;
     }
 
     /**
