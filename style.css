@@ -9,23 +9,12 @@ body {
     color: #6c5eb5;
 }
 
-.d64-directory .header {
+.d64-directory .header, .d64-directory .files .file {
     display: flex;
 }
 
-.d64-directory .header :nth-child(1) {
-    width: 32px;
-}
-
-.d64-directory .files .file {
-    display: flex;
-}
-
-.d64-directory .files .file .size {
+.d64-directory .header :nth-child(1), .d64-directory .files .file .size {
     width: 72px;
-}
-
-.d64-directory .files .file .name {
 }
 
 .d64-directory .files .file .type {
@@ -33,11 +22,7 @@ body {
     text-align: right;
 }
 
-.d64-directory .header .inverse{
+.d64-directory .header .inverse {
     color: #352879;
     background-color: #6c5eb5;
-}
-
-.d64-directory .files .file {
-
 }
