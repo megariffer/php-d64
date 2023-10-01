@@ -21,7 +21,7 @@ $disk->loadFromFile('test.d64');
     <div class="d64-directory">
         <div class="header">
             <div>0</div>
-            <div class="inverse">"<?= petscii_to_html(utf8_encode($disk->getName())) ?>"</div>
+            <div class="inverse">"<?= petscii_to_html($disk->getName()) ?>"</div>
             <div class="inverse"><?= utf8_encode($disk->getHeader()) ?></div>
         </div>
         <div class="files">
