@@ -33,7 +33,6 @@ build
 composer.lock
 docs
 vendor
-index.php
 files
 
 # Commodore files
