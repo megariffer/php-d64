@@ -9,8 +9,9 @@ namespace PhpD64;
  */
 class File
 {
-
     /**
+     * File types
+     *
      * @var string[]
      */
     private static array $fileTypes = [
@@ -22,32 +23,77 @@ class File
     ];
 
     /**
+     * Raw binary data of the file
+     *
      * @var string
      */
     protected string $rawData;
 
     /**
+     * Name of the file
+     *
      * @var string
      */
     protected string $name;
 
     /**
+     * The file type @see $fileTypes
+     *
      * @var string
      */
     protected string $fileType;
 
     /**
+     * File size in blocks
+     *
      * @var int
      */
     protected int $size;
 
     /**
+     * The sectors that are occupied by the file
+     *
      * @var array
      */
     protected array $sectors;
 
     /**
-     * @param Track[] $tracks
+     * Get the filename
+     *
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * Set the filename
+     *
+     * @param string $name Name of the file
+     *
+     * @return void
+     */
+    public function setName(string $name): void
+    {
+        $this->name = $name;
+    }
+
+    /**
+     * Get the raw binary data
+     *
+     * @return string
+     */
+    public function getRawData(): string
+    {
+        return $this->rawData;
+    }
+
+    /**
+     * Set the raw binary data
+     *
+     * @param Track[] $tracks Tracks
+     *
      * @return string
      */
     public function setRawData(array $tracks): ?string
@@ -66,36 +112,53 @@ class File
         return $this->rawData;
     }
 
-    public function getRawData(): string
+    /**
+     * Get the size of the file
+     *
+     * @return int
+     */
+    public function getSize(): int
     {
-        return $this->rawData;
+        return $this->size;
     }
 
     /**
-     * @param $name
+     * Set the filesize
+     *
+     * @param int $size Size in blocks
+     *
+     * @return void
      */
-    public function setName($name): void
-    {
-        $this->name = $name;
-    }
-
-    /**
-     * @param $size
-     */
-    public function setSize($size): void
+    public function setSize(int $size): void
     {
         $this->size = $size;
     }
 
     /**
-     * @param $fileType
+     * Get the file type
+     *
+     * @return string
      */
-    public function setFileType($fileType): void
+    public function getFileType(): string
+    {
+        return $this->fileType;
+    }
+
+    /**
+     * Set the file type
+     *
+     * @param string $fileType The file type
+     *
+     * @return void
+     */
+    public function setFileType(string $fileType): void
     {
         $this->fileType = self::$fileTypes[$fileType];
     }
 
     /**
+     * Get every file type
+     *
      * @return string[]
      */
     public static function getFileTypes(): array
@@ -104,7 +167,11 @@ class File
     }
 
     /**
-     * @param string[] $fileTypes
+     * Modify the file types
+     *
+     * @param string[] $fileTypes The file types
+     *
+     * @return void
      */
     public static function setFileTypes(array $fileTypes): void
     {
@@ -112,13 +179,25 @@ class File
     }
 
     /**
-     * Set the locations of all the sectors this file occupies.
+     * Get the sectors
      *
-     * The first two bytes of each sector indicate the location of the next track/sector of the file.
-     * If the track is set to $00, then it is the last sector of the file.
+     * @return array
+     */
+    public function getSectors(): ?array
+    {
+        return $this->sectors;
+    }
+
+    /**
+     * Set the locations of all the sectors this file occupies
      *
-     * @param array $first_sector_location
-     * @param Track[] $tracks
+     * The first two bytes of each sector indicate the location of the
+     * next track/sector of the file. If the track is set to $00, then
+     * it is the last sector of the file.
+     *
+     * @param array   $first_sector_location Track of the first sector
+     * @param Track[] $tracks                The tracks
+     *
      * @return array|null
      */
     public function setSectors(array $first_sector_location, array $tracks): ?array
@@ -140,37 +219,5 @@ class File
         }
 
         return $this->sectors;
-    }
-
-    /**
-     * @return array
-     */
-    public function getSectors(): ?array
-    {
-        return $this->sectors;
-    }
-
-    /**
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    /**
-     * @return string
-     */
-    public function getFileType(): string
-    {
-        return $this->fileType;
-    }
-
-    /**
-     * @return int
-     */
-    public function getSize(): int
-    {
-        return $this->size;
     }
 }
